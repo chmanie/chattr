@@ -35,7 +35,6 @@ localTime = function(offset) {
     offset = 0;
   }
   curDate = new Date();
-  offset = 0;
   return time = {
     string: padStr(curDate.getHours() + offset) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()),
     hour: curDate.getHours()
@@ -56,7 +55,7 @@ io.sockets.on('connection', function(client) {
       });
       return client.emit('newmsg', {
         time: cTime,
-        nick: 'Du',
+        nick: cdata.nickname,
         msg: data.msg
       });
     });
@@ -68,6 +67,7 @@ io.sockets.on('connection', function(client) {
       nickname: data.nickname,
       offset: offset
     });
+    client.emit('sysmsg', 'Hallo, <b>' + data.nickname + '</b>!');
     client.broadcast.emit('sysmsg', localTime().string + ' - <b>' + data.nickname + '</b> connected');
     return console.log(localTime().string + ' - ' + data.nickname + ' connected. Offset: ' + offset);
   });

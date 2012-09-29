@@ -12,12 +12,12 @@ html(lang="de")
     script(scr='bootstrap/js/bootstrap.min.js')
     script
       server.on('sysmsg', function(sysmsgtext) {
-        $('#chat_window_text').append('<br>' + sysmsgtext);
+        $('#chat_window_text').append(sysmsgtext + '<br>');
         // Bitte folgende Zeile verstehen!
         $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
       });
       server.on('newmsg', function(data) {
-        $('#chat_window_text').append('<br>' + data.time + ' - <b>' + data.nick + '</b>: ' + data.msg);
+        $('#chat_window_text').append(data.time + ' - <b>' + data.nick + '</b>: ' + data.msg + '<br>');
         $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
       });
       $(document).ready(function() {
@@ -40,16 +40,38 @@ html(lang="de")
           };
         });
       });
-    h1='Chattr'
-    #chat_window_clip(style='position:relative; width:500px; height:300px; overflow:auto')
-      #chat_window_text
-        center
-          p &nbsp;
-          p Dein Name:
-          form
-            input#nickname(type='text')
-            br
-            button#join Chat betreten
-    form
-      input#message(type='text', style='display:none')
-      button#submit(style='display:none') Absenden
+    .navbar
+      .navbar-inner
+        a.brand(href='#') chattr
+        ul.nav
+          li.active 
+            a(href='#') home
+    .container
+      .row
+        .span12
+          .hero-unit(style='height:50%')
+            h2 chattr
+            p a webchat made with node.js, express, socket.io and bootstrap
+      .row
+        .span2#active_users_clip(style='overflow:auto')
+          .well(style='height:300px')
+            #active_users_text
+            p User 1
+        .span10
+          .well#chat_window_clip(style='height:300px;overflow:auto')
+            #chat_window_text
+              center
+                p &nbsp;
+                p &nbsp;
+                h2 Los gehts!
+                p &nbsp;
+                form
+                  input.input-large#nickname(type='text', placeholder='Dein Name')
+                  br
+                  button.btn.btn-success.btn-large#join Chat betreten
+      .row
+        .span10.offset2   
+            form.form-search
+              .input-append
+                input.span9.search.query#message(type='text', style='display:none')
+                button.btn#submit(style='display:none') Absenden

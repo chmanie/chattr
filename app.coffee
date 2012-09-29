@@ -18,16 +18,13 @@ padStr = (i) ->
     "0" + i
   else "" + i
 
-
-
 localTime = (offset) ->
   offset = 0 if !offset?
   curDate = new Date()
   time = { string: padStr(curDate.getHours() + offset) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()), hour: curDate.getHours()}
-# timeOffset zu clients berechnen als Parameter zu curServerTime
 # auslagern ende
 
-# disconnect hinzufügen
+# on disconnect hinzufügen
 io.sockets.on 'connection', (client) ->
   console.log localTime().string + ' - New connection'
   client.on 'message', (data) ->
@@ -35,9 +32,10 @@ io.sockets.on 'connection', (client) ->
     client.get 'cdata', (err, cdata) ->
       cTime = localTime(cdata.offset).string
       client.broadcast.emit 'newmsg', { time: cTime, nick: cdata.nickname, msg: data.msg }
-      client.emit 'newmsg', { time: cTime, nick: 'Du', msg: data.msg }
+      client.emit 'newmsg', { time: cTime, nick: cdata.nickname, msg: data.msg }
   client.on 'join', (data) ->
     offset = data.localHour - localTime().hour
     client.set 'cdata', { nickname: data.nickname, offset: offset }
+    client.emit 'sysmsg', 'Hallo, <b>' + data.nickname + '</b>!'
     client.broadcast.emit 'sysmsg', localTime().string + ' - <b>' + data.nickname + '</b> connected'
     console.log localTime().string + ' - ' + data.nickname + ' connected. Offset: ' + offset
