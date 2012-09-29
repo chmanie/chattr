@@ -7,7 +7,7 @@ io = socket.listen server
 app.set 'view engine', 'jade'
 app.set 'views', 'views/'
 
-app.use('/scripts', express.static('scripts/'))
+app.use('/', express.static(__dirname + '/public'))
 
 app.get '/', (req, res) ->
   res.render 'index'
@@ -18,22 +18,26 @@ padStr = (i) ->
     "0" + i
   else "" + i
 
-curServerTime = () ->
+
+
+localTime = (offset) ->
+  offset = 0 if !offset?
   curDate = new Date()
-  dateStr =  padStr(curDate.getHours()) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds())
+  time = { string: padStr(curDate.getHours() + offset) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()), hour: curDate.getHours()}
 # timeOffset zu clients berechnen als Parameter zu curServerTime
 # auslagern ende
 
 # disconnect hinzufügen
 io.sockets.on 'connection', (client) ->
-  console.log curServerTime() + ' - New connection'
+  console.log localTime().string + ' - New connection'
   client.on 'message', (data) ->
     console.log data.msg
-    cTime = curServerTime()
-    client.get 'nick', (err, name) ->
-      client.broadcast.emit 'newmsg', { time: cTime, nick: name, msg: data.msg }
+    client.get 'cdata', (err, cdata) ->
+      cTime = localTime(cdata.offset).string
+      client.broadcast.emit 'newmsg', { time: cTime, nick: cdata.nickname, msg: data.msg }
       client.emit 'newmsg', { time: cTime, nick: 'Du', msg: data.msg }
-  client.on 'join', (nickname) ->
-    console.log curServerTime() + ' - ' + nickname + ' connected'
-    client.set 'nick', nickname 
-    client.broadcast.emit 'sysmsg', curServerTime() + ' - <b>' + nickname + '</b> connected'
+  client.on 'join', (data) ->
+    offset = data.localHour - localTime().hour
+    client.set 'cdata', { nickname: data.nickname, offset: offset }
+    client.broadcast.emit 'sysmsg', localTime().string + ' - <b>' + data.nickname + '</b> connected'
+    console.log localTime().string + ' - ' + data.nickname + ' connected. Offset: ' + offset
