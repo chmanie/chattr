@@ -1,0 +1,53 @@
+!!! 5
+html(lang="de")
+  head
+    script(src='scripts/socket.io.js')
+    meta(charset='utf8')
+    title='chattr'
+    link(href='bootstrap/css/bootstrap.min.css', rel='stylesheet')
+  body
+    script(type='text/javascript')
+      var server = io.connect('http://chmanie.chattr.jit.su');
+    script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js')
+    script(scr='bootstrap/js/bootsrap.min.js')
+    script
+      server.on('sysmsg', function(sysmsgtext) {
+        $('#chat_window_text').append('<br>' + sysmsgtext);
+        // Bitte folgende Zeile verstehen!
+        $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
+      });
+      server.on('newmsg', function(data) {
+        $('#chat_window_text').append('<br>' + data.time + ' - <b>' + data.nick + '</b>: ' + data.msg);
+        $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
+      });
+      $(document).ready(function() {
+        $('#join').click(function(e) {
+          e.preventDefault();
+          nickname = $('#nickname').attr('value');
+          $('#chat_window_text').text('');
+          $('#message').show();
+          $('#submit').show();
+          server.emit('join', nickname);
+          });
+        $('#submit').click(function(e) {
+          e.preventDefault();
+          if ($('#message').attr('value') != '') {
+            var msgdata = $('#message').attr('value');
+            server.emit('message', { msg: msgdata });
+            $('#message').attr('value', '');
+          };
+        });
+      });
+    h1='Chattr'
+    #chat_window_clip(style='position:relative; width:500px; height:300px; overflow:auto')
+      #chat_window_text
+        center
+          p &nbsp;
+          p Dein Name:
+          form
+            input#nickname(type='text')
+            br
+            button#join Chat betreten
+    form
+      input#message(type='text', style='display:none')
+      button#submit(style='display:none') Absenden
