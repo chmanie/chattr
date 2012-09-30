@@ -9,8 +9,11 @@ app.set 'views', 'views/'
 
 app.use('/', express.static(__dirname + '/public'))
 
+app.get '/:page', (req, res) ->
+  res.render req.params.page
+
 app.get '/', (req, res) ->
-  res.render 'index'
+  res.render 'home'
 
 # auslagern
 padStr = (i) ->

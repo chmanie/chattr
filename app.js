@@ -17,8 +17,12 @@ app.set('views', 'views/');
 
 app.use('/', express["static"](__dirname + '/public'));
 
+app.get('/:page', function(req, res) {
+  return res.render(req.params.page);
+});
+
 app.get('/', function(req, res) {
-  return res.render('index');
+  return res.render('home');
 });
 
 padStr = function(i) {

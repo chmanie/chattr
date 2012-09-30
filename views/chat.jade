@@ -24,12 +24,14 @@ block script
       var localHour = d.getHours();
       $('#join').click(function(e) {
         e.preventDefault();
-        var nickname = $('#nickname').attr('value');
-        $('#chat_window_text').text('');
-        $('#message').show();
-        $('#submit').show();
-        server.emit('join', { nickname: nickname, localHour: localHour });
-        });
+        if ($('#nickname').attr('value') != '') {
+          var nickname = $('#nickname').attr('value');
+          $('#chat_window_text').text('');
+          $('#message').show();
+          $('#submit').show();
+          server.emit('join', { nickname: nickname, localHour: localHour });
+        }
+      });
       $('#submit').click(function(e) {
         e.preventDefault();
         if ($('#message').attr('value') != '') {
