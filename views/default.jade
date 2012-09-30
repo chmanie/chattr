@@ -1,0 +1,74 @@
+!!! 5
+html(lang="de")
+  head
+    script(src='scripts/socket.io.js')
+    meta(charset='utf8')
+    title chattr
+    link(href='bootstrap/css/bootstrap.min.css', rel='stylesheet')
+  body
+    script(type='text/javascript')
+      var server = io.connect('http://localhost:8080');
+    script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js')
+    script(scr='bootstrap/js/bootstrap.min.js')
+    script
+      server.on('sysmsg', function(sysmsgtext) {
+        $('#chat_window_text').append(sysmsgtext + '<br>');
+        // Bitte folgende Zeile verstehen!
+        $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
+      });
+      server.on('newmsg', function(data) {
+        $('#chat_window_text').append(data.time + ' - <b>' + data.nick + '</b>: ' + data.msg + '<br>');
+        $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
+      });
+      $(document).ready(function() {
+        var d = new Date();
+        var localHour = d.getHours();
+        $('#join').click(function(e) {
+          e.preventDefault();
+          var nickname = $('#nickname').attr('value');
+          $('#chat_window_text').text('');
+          $('#message').show();
+          $('#submit').show();
+          server.emit('join', { nickname: nickname, localHour: localHour });
+          });
+        $('#submit').click(function(e) {
+          e.preventDefault();
+          if ($('#message').attr('value') != '') {
+            var msgdata = $('#message').attr('value');
+            server.emit('message', { msg: msgdata });
+            $('#message').attr('value', '');
+          };
+        });
+      });
+  .navbar
+    .navbar-inner
+      a.brand(href='/home') chattr
+      ul.nav
+        li 
+          a(href='/home') home
+        li.active
+          a(href='/chat') chat
+  .container
+    .row
+      .span2#active_users_clip(style='overflow:auto')
+        .well(style='height:300px')
+          #active_users_text
+          p User 1
+      .span10
+        .well#chat_window_clip(style='height:300px;overflow:auto')
+          #chat_window_text
+            center
+              p &nbsp;
+              p &nbsp;
+              h2 Los gehts!
+              p &nbsp;
+              form
+                input.input-large#nickname(type='text', placeholder='Dein Name')
+                br
+                button.btn.btn-success.btn-large#join Chat betreten
+    .row
+      .span10.offset2   
+          form.form-search
+            .input-append
+              input.span9.search.query#message(type='text', style='display:none')
+              button.btn#submit(style='display:none') Absenden

@@ -1,0 +1,14 @@
+extends index
+
+block nav
+  li.active 
+    a(href='/home') home
+  li
+    a(href='/chat') chat
+
+block content
+  .row
+  .span12
+    .hero-unit(style='height:50%')
+      h2 chattr
+      p a webchat made with node.js, express, socket.io and bootstrap
