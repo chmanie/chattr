@@ -40,5 +40,5 @@ io.sockets.on 'connection', (client) ->
     offset = data.localHour - localTime().hour
     client.set 'cdata', { nickname: data.nickname, offset: offset }
     client.emit 'sysmsg', 'Hallo, <b>' + data.nickname + '</b>!'
-    client.broadcast.emit 'sysmsg', localTime().string + ' - <b>' + data.nickname + '</b> connected'
+    client.broadcast.emit 'sysmsg', localTime(offset).string + ' - <b>' + data.nickname + '</b> connected'
     console.log localTime().string + ' - ' + data.nickname + ' connected. Offset: ' + offset

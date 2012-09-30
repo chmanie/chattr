@@ -72,7 +72,7 @@ io.sockets.on('connection', function(client) {
       offset: offset
     });
     client.emit('sysmsg', 'Hallo, <b>' + data.nickname + '</b>!');
-    client.broadcast.emit('sysmsg', localTime().string + ' - <b>' + data.nickname + '</b> connected');
+    client.broadcast.emit('sysmsg', localTime(offset).string + ' - <b>' + data.nickname + '</b> connected');
     return console.log(localTime().string + ' - ' + data.nickname + ' connected. Offset: ' + offset);
   });
 });
