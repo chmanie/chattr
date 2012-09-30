@@ -21,24 +21,22 @@ padStr = (i) ->
     "0" + i
   else "" + i
 
-localTime = (offset) ->
-  offset = 0 if !offset?
+localTime = () ->
   curDate = new Date()
-  time = { string: padStr(curDate.getHours() + offset) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()), hour: curDate.getHours()}
+  time = { string: padStr(curDate.getHours()) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()), hour: curDate.getHours()}
 # auslagern ende
 
 # on disconnect hinzufügen
 io.sockets.on 'connection', (client) ->
   console.log localTime().string + ' - New connection'
   client.on 'message', (data) ->
-    console.log data.msg
     client.get 'cdata', (err, cdata) ->
-      cTime = localTime(cdata.offset).string
-      client.broadcast.emit 'newmsg', { time: cTime, nick: cdata.nickname, msg: data.msg }
-      client.emit 'newmsg', { time: cTime, nick: cdata.nickname, msg: data.msg }
+      client.broadcast.emit 'newmsg', { nick: cdata.nickname, msg: data.msg }
+      client.emit 'newmsg', { nick: cdata.nickname, msg: data.msg }
+      console.log localTime().string + ' - ' + cdata.nickname + ': ' + data.msg
   client.on 'join', (data) ->
     offset = data.localHour - localTime().hour
-    client.set 'cdata', { nickname: data.nickname, offset: offset }
+    client.set 'cdata', { nickname: data.nickname }
     client.emit 'sysmsg', 'Hallo, <b>' + data.nickname + '</b>!'
-    client.broadcast.emit 'sysmsg', localTime(offset).string + ' - <b>' + data.nickname + '</b> connected'
-    console.log localTime().string + ' - ' + data.nickname + ' connected. Offset: ' + offset
+    client.broadcast.emit 'sysmsg', '<b>' + data.nickname + '</b> connected'
+    console.log localTime().string + ' - ' + data.nickname + ' connected.'

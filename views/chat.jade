@@ -10,9 +10,22 @@ block script
   script(src='http://ajax.googleapis.com/ajax/libs/jquery/1.5/jquery.min.js')
   script(scr='bootstrap/js/bootstrap.min.js')
   script
+    padStr = function(i) {
+      if (i < 10) {
+        return "0" + i;
+      } else { 
+        return "" + i;
+      }
+    };
+    localTime = function() {
+      var curDate, time;
+      curDate = new Date();
+      return time = {
+        string: padStr(curDate.getHours()) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()),
+        hour: curDate.getHours()
+      };
+    };
     $(document).ready(function() {
-      var d = new Date();
-      var localHour = d.getHours();
       $('#join').click(function(e) {
         e.preventDefault();
         if ($('#nickname').attr('value') != '') {
@@ -26,10 +39,10 @@ block script
             $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
           });
           server.on('newmsg', function(data) {
-            $('#chat_window_text').append(data.time + ' - <b>' + data.nick + '</b>: ' + data.msg + '<br>');
+            $('#chat_window_text').append(localTime().string + ' <b>' + data.nick + '</b>: ' + data.msg + '<br>');
             $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
           });
-          server.emit('join', { nickname: nickname, localHour: localHour });
+          server.emit('join', { nickname: nickname });
         }
       });
       $('#submit').click(function(e) {
@@ -68,7 +81,7 @@ block content
               button.btn.btn-success.btn-large#join Chat betreten
   .row
     .span10.offset2   
-        form.form-search
+        form.form-search(autocomplete='off')
           .input-append
             input.span9.search.query#message(type='text', style='display:none')
             button.btn#submit(style='display:none') Absenden

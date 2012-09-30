@@ -33,14 +33,11 @@ padStr = function(i) {
   }
 };
 
-localTime = function(offset) {
+localTime = function() {
   var curDate, time;
-  if (!(offset != null)) {
-    offset = 0;
-  }
   curDate = new Date();
   return time = {
-    string: padStr(curDate.getHours() + offset) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()),
+    string: padStr(curDate.getHours()) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()),
     hour: curDate.getHours()
   };
 };
@@ -48,31 +45,26 @@ localTime = function(offset) {
 io.sockets.on('connection', function(client) {
   console.log(localTime().string + ' - New connection');
   client.on('message', function(data) {
-    console.log(data.msg);
     return client.get('cdata', function(err, cdata) {
-      var cTime;
-      cTime = localTime(cdata.offset).string;
       client.broadcast.emit('newmsg', {
-        time: cTime,
         nick: cdata.nickname,
         msg: data.msg
       });
-      return client.emit('newmsg', {
-        time: cTime,
+      client.emit('newmsg', {
         nick: cdata.nickname,
         msg: data.msg
       });
+      return console.log(localTime().string + ' - ' + cdata.nickname + ': ' + data.msg);
     });
   });
   return client.on('join', function(data) {
     var offset;
     offset = data.localHour - localTime().hour;
     client.set('cdata', {
-      nickname: data.nickname,
-      offset: offset
+      nickname: data.nickname
     });
     client.emit('sysmsg', 'Hallo, <b>' + data.nickname + '</b>!');
-    client.broadcast.emit('sysmsg', localTime(offset).string + ' - <b>' + data.nickname + '</b> connected');
-    return console.log(localTime().string + ' - ' + data.nickname + ' connected. Offset: ' + offset);
+    client.broadcast.emit('sysmsg', '<b>' + data.nickname + '</b> connected');
+    return console.log(localTime().string + ' - ' + data.nickname + ' connected.');
   });
 });
