@@ -10,7 +10,8 @@ app.set 'views', 'views/'
 app.use('/', express.static(__dirname + '/public'))
 
 app.get '/:page', (req, res) ->
-  res.render req.params.page
+  if req.params.page != 'favicon.ico'
+    res.render req.params.page
 
 app.get '/', (req, res) ->
   res.render 'home'
@@ -26,17 +27,27 @@ localTime = () ->
   time = { string: padStr(curDate.getHours()) + ':' + padStr(curDate.getMinutes()) + ':' + padStr(curDate.getSeconds()), hour: curDate.getHours()}
 # auslagern ende
 
-# on disconnect hinzufügen
+getClients = (socket) ->
+  cList = socket.clients()
+  console.log(cList[0].store)
+  clients = {}
+  for client in cList
+    clients[client.id] = { id: client.id, nickname: client.store.data.cdata.nickname }
+  clients
+
 io.sockets.on 'connection', (client) ->
   console.log localTime().string + ' - New connection'
   client.on 'message', (data) ->
     client.get 'cdata', (err, cdata) ->
-      client.broadcast.emit 'newmsg', { nick: cdata.nickname, msg: data.msg }
-      client.emit 'newmsg', { nick: cdata.nickname, msg: data.msg }
+      io.sockets.emit 'newmsg', { nick: cdata.nickname, msg: data.msg }
       console.log localTime().string + ' - ' + cdata.nickname + ': ' + data.msg
   client.on 'join', (data) ->
-    offset = data.localHour - localTime().hour
+    userdata = { id: client.id, nickname: data.nickname}
     client.set 'cdata', { nickname: data.nickname }
-    client.emit 'sysmsg', 'Hallo, <b>' + data.nickname + '</b>!'
-    client.broadcast.emit 'sysmsg', '<b>' + data.nickname + '</b> connected'
-    console.log localTime().string + ' - ' + data.nickname + ' connected.'
+    ulist = getClients(io.sockets)
+    # hier vllt nur dem neuen client die userliste schicken
+    io.sockets.emit 'join', { userdata: userdata, userlist: ulist }
+    console.log localTime().string + ' - ' + data.nickname + ' connected with ID: ' + client.id
+  client.on 'disconnect', () ->
+    client.get 'cdata', (err, cdata) ->
+      client.broadcast.emit 'disconnect', { id: client.id, nickname: cdata.nickname }

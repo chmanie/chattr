@@ -25,6 +25,19 @@ block script
         hour: curDate.getHours()
       };
     };
+    createUserlist = function(userlist) {
+      htmluserlist = '';
+      for (var id in userlist) {
+        htmluserlist = htmluserlist + '<div id="' + userlist[id].id + '">' + userlist[id].nickname + '</div>';
+      }
+      htmluserlist = htmluserlist;
+      $('#active_users_text').html(htmluserlist);
+    };
+    addLine = function(lineString) {
+      $('#chat_window_text').append(lineString);
+      // Bitte folgende Zeile verstehen!
+      $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
+    };
     $(document).ready(function() {
       $('#join').click(function(e) {
         e.preventDefault();
@@ -33,15 +46,23 @@ block script
           $('#chat_window_text').text('');
           $('#message').show();
           $('#submit').show();
-          server.on('sysmsg', function(sysmsgtext) {
-            $('#chat_window_text').append(sysmsgtext + '<br>');
-          // Bitte folgende Zeile verstehen!
-            $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
+          // event listeners start
+          server.on('join', function(data) {
+            // first get userlist from server
+            // username verbieten, wenn schon vergeben
+            if (data.userlist != null) {
+              createUserlist(data.userlist);
+            }
+            addLine('<b>' + data.userdata.nickname + '</b> ist da!<br>');
           });
           server.on('newmsg', function(data) {
-            $('#chat_window_text').append(localTime().string + ' <b>' + data.nick + '</b>: ' + data.msg + '<br>');
-            $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
+            addLine(localTime().string + ' <b>' + data.nick + '</b>: ' + data.msg + '<br>');
           });
+          server.on('disconnect', function(data) {
+            $('#' + data.id).remove();
+            addLine('<b>' + data.nickname + '</b> ging.<br>');
+          });
+          // event listeners end
           server.emit('join', { nickname: nickname });
         }
       });
@@ -66,7 +87,6 @@ block content
     .span2#active_users_clip(style='overflow:auto')
       .well(style='height:300px')
         #active_users_text
-        p User 1
     .span10
       .well#chat_window_clip(style='height:300px;overflow:auto')
         #chat_window_text
