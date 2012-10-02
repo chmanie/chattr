@@ -38,33 +38,50 @@ block script
       // Bitte folgende Zeile verstehen!
       $('#chat_window_clip').animate({scrollTop:$('#chat_window_clip')[0].scrollHeight}, 1000);
     };
+    startListeners = function(server) {
+      server.on('newmsg', function(data) {
+        addLine(localTime().string + ' <b>' + data.nick + '</b>: ' + data.msg + '<br>');
+      });
+      server.on('disconnect', function(data) {
+        $('#' + data.id).remove();
+        addLine('<b>' + data.nickname + '</b> ging.<br>');
+      });
+      server.on('youjoin', function(data) {
+        createUserlist(data.userlist);
+        addLine('<b>' + data.userdata.nickname + '</b> ist da!<br>');
+      });
+    };
     $(document).ready(function() {
+      $('#nickname').keyup(function(e) {
+        if (e.which == 13 ) {
+          e.preventDefault();
+        }
+        server.emit('tryusername', $('#nickname').attr('value'));
+      });
       $('#join').click(function(e) {
         e.preventDefault();
-        if ($('#nickname').attr('value') != '') {
+        if ($('#nickname').attr('value') != '') { 
           var nickname = $('#nickname').attr('value');
-          $('#chat_window_text').text('');
-          $('#message').show();
-          $('#submit').show();
-          // event listeners start
-          server.on('join', function(data) {
-            // first get userlist from server
-            // username verbieten, wenn schon vergeben
-            if (data.userlist != null) {
-              createUserlist(data.userlist);
-            }
-            addLine('<b>' + data.userdata.nickname + '</b> ist da!<br>');
-          });
-          server.on('newmsg', function(data) {
-            addLine(localTime().string + ' <b>' + data.nick + '</b>: ' + data.msg + '<br>');
-          });
-          server.on('disconnect', function(data) {
-            $('#' + data.id).remove();
-            addLine('<b>' + data.nickname + '</b> ging.<br>');
-          });
-          // event listeners end
           server.emit('join', { nickname: nickname });
         }
+      });
+      server.on('usernameIsNotAvailable', function() {
+        $('#formcontrol').removeClass('success');
+        $('#formcontrol').addClass('error');
+        $('#nickerror').text('Benutzername ist bereits vergeben!');
+      });
+      server.on('usernameIsAvailable', function() {
+        $('#formcontrol').removeClass('error');
+        $('#formcontrol').addClass('success');
+        $('#nickerror').text('');
+      });
+      server.on('mejoin', function(data) {
+        $('#starttext').remove();
+        $('#message').show();
+        $('#submit').show();
+        createUserlist(data.userlist);
+        addLine('<b>' + data.userdata.nickname + '</b> ist da!<br>');
+        startListeners(server);
       });
       $('#submit').click(function(e) {
         e.preventDefault();
@@ -85,20 +102,24 @@ block nav
 block content
   .row
     .span2#active_users_clip(style='overflow:auto')
-      .well(style='height:300px')
+      .well(style='height:300px;width:100px')
         #active_users_text
     .span10
       .well#chat_window_clip(style='height:300px;overflow:auto')
         #chat_window_text
-          center
+          center#starttext
             p &nbsp;
             p &nbsp;
             h2 Los gehts!
             p &nbsp;
             form
-              input.input-large#nickname(type='text', placeholder='Dein Name')
-              br
-              button.btn.btn-success.btn-large#join Chat betreten
+              .control-group#formcontrol
+                .controls
+                  input.input-large#nickname(type='text', placeholder='Dein Name', autocomplete='off')
+                  br
+                  span.help-inline#nickerror
+                br
+                button.btn.btn-success.btn-large#join Chat betreten
   .row
     .span10.offset2   
         form.form-search(autocomplete='off')

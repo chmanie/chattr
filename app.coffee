@@ -29,25 +29,43 @@ localTime = () ->
 
 getClients = (socket) ->
   cList = socket.clients()
-  console.log(cList[0].store)
-  clients = {}
+  clients = []
   for client in cList
-    clients[client.id] = { id: client.id, nickname: client.store.data.cdata.nickname }
+    if client.store.data.cdata?
+      clients.push { id: client.id, nickname: client.store.data.cdata.nickname }
   clients
+
+usernameIsAvailable = (socket, nickname) ->
+  ulist = getClients(socket)
+  isUsernameAvailable = true
+  for user in ulist
+    if user.nickname == nickname
+      isUsernameAvailable = false
+  isUsernameAvailable
 
 io.sockets.on 'connection', (client) ->
   console.log localTime().string + ' - New connection'
   client.on 'message', (data) ->
     client.get 'cdata', (err, cdata) ->
       io.sockets.emit 'newmsg', { nick: cdata.nickname, msg: data.msg }
-      console.log localTime().string + ' - ' + cdata.nickname + ': ' + data.msg
+  #    console.log localTime().string + ' - ' + cdata.nickname + ': ' + data.msg
   client.on 'join', (data) ->
     userdata = { id: client.id, nickname: data.nickname}
-    client.set 'cdata', { nickname: data.nickname }
-    ulist = getClients(io.sockets)
-    # hier vllt nur dem neuen client die userliste schicken
-    io.sockets.emit 'join', { userdata: userdata, userlist: ulist }
-    console.log localTime().string + ' - ' + data.nickname + ' connected with ID: ' + client.id
+    if usernameIsAvailable(io.sockets, data.nickname)
+      # hier vllt nur dem neuen client die userliste schicken
+      client.set 'cdata', { nickname: data.nickname }
+      uLists = getClients(io.sockets)
+      client.emit 'mejoin', { userdata: userdata, userlist: uLists }
+      client.broadcast.emit 'youjoin', { userdata: userdata, userlist: uLists }
+      console.log localTime().string + ' - ' + data.nickname + ' connected with ID: ' + client.id
+    else
+      client.emit 'usernameIsNotAvailable'
+  client.on 'tryusername', (nickname) ->
+    if usernameIsAvailable(io.sockets, nickname)
+      client.emit 'usernameIsAvailable'
+    else
+      client.emit 'usernameIsNotAvailable'
   client.on 'disconnect', () ->
     client.get 'cdata', (err, cdata) ->
-      client.broadcast.emit 'disconnect', { id: client.id, nickname: cdata.nickname }
+      if cdata?
+        client.broadcast.emit 'disconnect', { id: client.id, nickname: cdata.nickname }
