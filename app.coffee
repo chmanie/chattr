@@ -52,7 +52,7 @@ io.sockets.on 'connection', (client) ->
   client.on 'join', (data) ->
     userdata = { id: client.id, nickname: data.nickname}
     if usernameIsAvailable(io.sockets, data.nickname)
-      # hier vllt nur dem neuen client die userliste schicken
+      # hier vllt nur dem neuen client die ganze userliste schicken
       client.set 'cdata', { nickname: data.nickname }
       uLists = getClients(io.sockets)
       client.emit 'mejoin', { userdata: userdata, userlist: uLists }

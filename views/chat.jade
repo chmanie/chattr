@@ -51,29 +51,61 @@ block script
         addLine('<b>' + data.userdata.nickname + '</b> ist da!<br>');
       });
     };
+    userNameNotAvailableAction = function() {
+      $('#formcontrol').removeClass('success');
+      $('#formcontrol').addClass('error');
+      $('#join').removeClass('btn-success');
+      $('#nickerror').text('Benutzername ist bereits vergeben!');
+    };
+    userNameAvailableAction = function() {
+      $('#formcontrol').removeClass('error');
+      $('#formcontrol').addClass('success');
+      $('#join').addClass('btn-success');
+      $('#nickerror').text('');
+    };
+    userNameResetAction = function() {
+      $('#formcontrol').removeClass('error');
+      $('#formcontrol').removeClass('success');
+      $('#join').removeClass('btn-success');
+      $('#nickerror').text('');
+    };
+    // maybe a username regexp action would be adequate:
+    userNameNotValidAction = function() {
+      $('#formcontrol').removeClass('success');
+      $('#formcontrol').addClass('error');
+      $('#join').removeClass('btn-success');
+      $('#nickerror').text('Benutzername ungültig!');
+    };
+    usernameIsValid = function(username) {
+      // use regexps to validate username
+      // if, return true else, false
+      regEx = new RegExp('^[a-zA-ZÄÜÖäüöß0-9_-]{1,20}$');
+      return regEx.test(username);
+    };
+
     $(document).ready(function() {
       $('#nickname').keyup(function(e) {
         if (e.which == 13 ) {
           e.preventDefault();
         }
-        server.emit('tryusername', $('#nickname').attr('value'));
+        if(usernameIsValid($('#nickname').attr('value'))) {
+          server.emit('tryusername', $('#nickname').attr('value'));
+        } else {
+          userNameNotValidAction();
+        }
       });
       $('#join').click(function(e) {
         e.preventDefault();
-        if ($('#nickname').attr('value') != '') { 
+        if(usernameIsValid($('#nickname').attr('value'))) {
           var nickname = $('#nickname').attr('value');
           server.emit('join', { nickname: nickname });
         }
       });
       server.on('usernameIsNotAvailable', function() {
-        $('#formcontrol').removeClass('success');
-        $('#formcontrol').addClass('error');
-        $('#nickerror').text('Benutzername ist bereits vergeben!');
+        userNameNotAvailableAction();
       });
       server.on('usernameIsAvailable', function() {
-        $('#formcontrol').removeClass('error');
-        $('#formcontrol').addClass('success');
-        $('#nickerror').text('');
+        userNameAvailableAction();
       });
       server.on('mejoin', function(data) {
         $('#starttext').remove();
@@ -101,11 +133,11 @@ block nav
 
 block content
   .row
-    .span2#active_users_clip(style='overflow:auto')
-      .well(style='height:300px;width:100px')
+    .span2
+      .well#active_users_clip(style='height:300px;overflow:scroll;white-space:nowrap')
         #active_users_text
     .span10
-      .well#chat_window_clip(style='height:300px;overflow:auto')
+      .well#chat_window_clip(style='height:300px;overflow:scroll')
         #chat_window_text
           center#starttext
             p &nbsp;
@@ -119,7 +151,7 @@ block content
                   br
                   span.help-inline#nickerror
                 br
-                button.btn.btn-success.btn-large#join Chat betreten
+                button.btn.btn-large#join Chat betreten
   .row
     .span10.offset2   
         form.form-search(autocomplete='off')
